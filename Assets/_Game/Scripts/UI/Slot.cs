@@ -47,7 +47,7 @@ namespace Inventory
             currentAmount = amount;
             UpdateItemAmountText();
         }
-        public void SetEquippedText()
+         public void SetEquippedText()
         {
             if(isEquipped())
             {
@@ -129,21 +129,43 @@ namespace Inventory
 
                 if (originalSlot != null && originalSlot != this && originalSlot.CanBeDragged())
                 {
-                    Debug.Log($"Swapping items between slot {originalSlot.id} and slot {id}");
+                    ItemDataSO draggedItemData = originalSlot.GetItem();
+                    int draggedAmount = originalSlot.GetCurrentAmount();
 
-                    // Swap item data and images
-                    ItemDataSO tempItem = originalSlot.GetItem();
-                    int tempAmount = originalSlot.GetCurrentAmount();
+                    if (currentItem != null && currentItem.itemName == draggedItemData.itemName)
+                    {
+                        // Items are of the same type, merge them
+                        int totalAmount = currentAmount + draggedAmount;
+                        int maxStack = currentItem.maxStack;
 
-                    originalSlot.SetItem(currentItem, currentAmount);
-                    SetItem(tempItem, tempAmount);
+                        if (totalAmount <= maxStack)
+                        {
+                            // Merge completely
+                            SetCurrentAmount(totalAmount);
+                            originalSlot.SetItem(null); // Clear the original slot
+                        }
+                        else
+                        {
+                            // Merge partially and leave the rest in the original slot
+                            SetCurrentAmount(maxStack);
+                            originalSlot.SetCurrentAmount(totalAmount - maxStack);
+                        }
+                    }
+                    else
+                    {
+                        // Swap items if they are of different types
+                        ItemDataSO tempItem = currentItem;
+                        int tempAmount = currentAmount;
+
+                        SetItem(draggedItemData, draggedAmount);
+                        originalSlot.SetItem(tempItem, tempAmount);
+                    }
 
                     OnItemSwapped?.Invoke(originalSlot, this);
                 }
                 else
                 {
                     Debug.Log("Invalid target for swap. Returning item to original slot.");
-                    // If invalid target, return the item to its original slot
                     draggedItem.ResetToOriginalParent();
                 }
             }

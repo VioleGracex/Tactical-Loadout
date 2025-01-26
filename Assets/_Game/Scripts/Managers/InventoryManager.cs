@@ -89,10 +89,27 @@ namespace Managers
             SaveInventory();
         }
 
-        public void ConsumeItem(ItemDataSO item, Slot slot, int amount)
+    public void ConsumeItem(ItemDataSO item, Slot slot, int amount)
+    {
+        if (slot.GetItem() == item) // Ensure the slot contains the correct item
         {
-            DeductItem(item, amount);
+            int currentAmount = slot.GetCurrentAmount();
+            if (currentAmount >= amount)
+            {
+                slot.DeductAmount(amount); // Deduct from the chosen slot
+            }
+            else
+            {
+                Debug.LogWarning("Not enough items in the selected slot.");
+            }
         }
+        else
+        {
+            Debug.LogWarning("The selected slot does not contain the specified item.");
+        }
+
+        UpdateAmmoAndWeight(); // Update UI after consuming the item
+    }
 
         public void AddItem(ItemDataSO item, int amount)
         {
