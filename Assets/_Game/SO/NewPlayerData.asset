@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: NewPlayerData
+  m_EditorClassIdentifier: Assembly-CSharp:Data:PlayerDataSO
+  characterName: Player
+  hp: 100
+  level: 1
+  headArmor: {fileID: 0}
+  torsoArmor: {fileID: 0}
+  pistol: {fileID: 11400000, guid: a0da58e268c2ab645a7778a7caf977f6, type: 2}
+  rifle: {fileID: 11400000, guid: 493ca4fd69506354b8711303d2a85305, type: 2}
