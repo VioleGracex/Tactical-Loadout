@@ -43,10 +43,12 @@ namespace Data
             if (Random.Range(0, 2) == 0) // Randomly choose between head and torso
             {
                 hp -= Mathf.Max(0, damage - (headArmor != null ? headArmor.defenseModifier : 0));
+                Debug.Log("shot player in head");
             }
             else
             {
                 hp -= Mathf.Max(0, damage - (torsoArmor != null ? torsoArmor.defenseModifier : 0));
+                Debug.Log("shot player in torso");
             }
 
             if (hp <= 0)
@@ -76,6 +78,7 @@ namespace Data
             hp -= damage;
             if (hp <= 0)
             {
+                hp=0;
                 Die();
             }
         }

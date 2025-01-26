@@ -49,11 +49,21 @@ namespace Inventory
         }
         public void SetEquippedText()
         {
-            if (itemAmountText != null)
+            if(isEquipped())
+            {
+                itemAmountText.text = string.Empty;
+                itemAmountText.enabled = false;
+            }
+            else 
             {
                 itemAmountText.text = "E";
                 itemAmountText.enabled = true;
             }
+        }
+
+        public bool isEquipped()
+        {
+            return itemAmountText.text == "E";
         }
 
         public void DeductAmount(int amount)

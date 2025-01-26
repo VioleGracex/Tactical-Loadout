@@ -11,38 +11,54 @@ namespace Game
 {
     public class GameManager : MonoBehaviour
     {
+        #region variables
         public static GameManager Instance { get; private set; }
+        
 
         [Header("Player and Enemy")]
         public Player player;
         public Enemy enemy;
-        [SerializeField] PlayerDataSO playerData;
-        [SerializeField] HPBarUpdater playerHPBar;
-        [SerializeField] EnemyDataSO enemyData;
-        [SerializeField] HPBarUpdater enemyHPBar;
+        [SerializeField] private PlayerDataSO playerData;
+        [SerializeField] private HPBarUpdater playerHPBar;
+        [SerializeField] private EnemyDataSO enemyData;
+        [SerializeField] private HPBarUpdater enemyHPBar;
 
         [Header("UI Elements")]
-        [SerializeField] GameObject gameOverText;
-        [SerializeField] Button shootButton;
-        [SerializeField] Toggle pistolToggle;
-        [SerializeField] Toggle rifleToggle;
+        [SerializeField] private GameObject gameOverText;
+        [SerializeField] private Button shootButton;
+        [SerializeField] private Toggle pistolToggle;
+        [SerializeField] private Toggle rifleToggle;
+
 
         [Header("Images")]
-        [SerializeField] Image pistolSprite;
-        [SerializeField] Image rifleSprite;
+        [SerializeField] private Image pistolSprite;
+        [SerializeField] private Image rifleSprite;
 
         [Header("Managers")]
         [SerializeField] private InventoryManager inventoryManager;
         [SerializeField] private LootManager lootManager;
 
         private bool canShoot = true;
-        private float shootCooldown = 1.0f;
+        private float shootCooldown = 0.3f;
         private int enemyLevel = 1;
+#endregion
 
-        void Awake()
+        #region Unity Methods
+        private void Awake()
         {
-            player = new Player();
-            enemy = new Enemy();
+            InitializeSingleton();
+            InitializePlayerAndEnemy();
+        }
+
+        private void Start()
+        {
+            InitializeUI();
+            FindManagers();
+        }
+        #endregion
+
+        private void InitializeSingleton()
+        {
             if (Instance == null)
             {
                 Instance = this;
@@ -52,32 +68,47 @@ namespace Game
             {
                 Destroy(gameObject);
             }
+        }
 
+        private void InitializePlayerAndEnemy()
+        {
+            player = new Player();
+            enemy = new Enemy();
             InitializePlayer();
             SpawnEnemy();
         }
 
-        void Start()
+        private void InitializePlayer()
+        {
+            player.Initialize(playerData);
+            playerHPBar.UpdateHealthBar(player.hp);
+        }
+        private void SpawnEnemy()
+        {
+            enemy.Initialize(enemyData);
+            enemyHPBar.UpdateHealthBar(enemy.hp);
+            canShoot = true;
+            shootButton.interactable = true;
+        }
+
+        /// <summary>
+        /// Initializes UI elements and sets up event listeners.
+        /// </summary>
+        private void InitializeUI()
         {
             shootButton.onClick.AddListener(Shoot);
+        }
 
+        /// <summary>
+        /// Finds and assigns the InventoryManager and LootManager in the scene.
+        /// </summary>
+        private void FindManagers()
+        {
             inventoryManager = FindFirstObjectByType<InventoryManager>();
             lootManager = FindFirstObjectByType<LootManager>();
         }
 
-        void InitializePlayer()
-        {
-            player.Initialize(playerData);
-            playerHPBar.UpdateHealthBar(player.hp);
-            //playerSprite = playerData.image;
-        }
-
-        void SpawnEnemy()
-        {
-            enemy.Initialize(enemyData);
-            enemyHPBar.UpdateHealthBar(enemy.hp);
-            //enemySprite = enemyData.image;
-        }
+        #region Player Actions
 
         public void Heal(int value)
         {
@@ -86,7 +117,7 @@ namespace Game
             playerHPBar.UpdateHealthBar(player.hp);
         }
 
-        void Shoot()
+        private void Shoot()
         {
             if (!canShoot)
             {
@@ -116,18 +147,24 @@ namespace Game
             {
                 Debug.Log("Not enough ammo.");
             }
+
             inventoryManager.UpdateAmmoAndWeight();
             StartCoroutine(ShootCooldown());
             playerHPBar.UpdateHealthBar(player.hp);
             enemyHPBar.UpdateHealthBar(enemy.hp);
         }
 
-        System.Collections.IEnumerator ShootCooldown()
+        private System.Collections.IEnumerator ShootCooldown()
         {
             canShoot = false;
+            shootButton.interactable = false;
             yield return new WaitForSeconds(shootCooldown);
             canShoot = true;
+            shootButton.interactable = true;
         }
+        #endregion
+
+        #region Game State Management
 
         public void ShowGameOver()
         {
@@ -137,76 +174,24 @@ namespace Game
 
         public void GenerateLoot(int enemyLevel)
         {
+            canShoot = false;
+            shootButton.interactable = false;
             lootManager.GenerateLoot(enemyLevel);
         }
 
-        void SpawnNextEnemy()
+        /// <summary>
+        /// Spawns the next enemy with increased level.
+        /// </summary>
+        public void SpawnNextEnemy()
         {
-            enemyData = Instantiate(enemyData); // Clone the enemyData to reset values if necessary
             enemyData.level = enemyLevel++;
             SpawnEnemy();
         }
+        #endregion
 
-        void SaveInventory()
-        {
-            if (inventoryManager != null)
-            {
-                inventoryManager.SaveInventory();
-            }
-            else
-            {
-                Debug.LogError("InventoryManager not found in the scene.");
-            }
-        }
-
-        public void Equip(ItemDataSO item, Slot slot)
-        {
-            if (item == null)
-            {
-                Debug.LogWarning("Invalid item for equipping.");
-                return;
-            }
-            else if (item.equipmentType != EquipmentType.None)
-            {
-                switch (item.equipmentType)
-                {
-                    case EquipmentType.Head:
-                        player.headArmor = item;
-                        Debug.Log($"Equipped {item.itemName} as head armor.");
-                        break;
-                    case EquipmentType.Torso:
-                        player.torsoArmor = item;
-                        Debug.Log($"Equipped {item.itemName} as torso armor.");
-                        break;
-                    default:
-                        Debug.LogWarning("Invalid equipment type.");
-                        return;
-                }
-                slot.SetEquippedText();
-            }
-            else if(item.type == ItemType.Pistol || item.type == ItemType.Rifle)
-            {
-                switch (item.type)
-                {
-                    case ItemType.Pistol:
-                        player.pistol = item;
-                        Debug.Log($"Equipped {item.itemName} as pistol.");
-                        break;
-                    case ItemType.Rifle:
-                        player.rifle = item;
-                        Debug.Log($"Equipped {item.itemName} as rifle.");
-                        break;
-                    default:
-                        Debug.LogWarning("Invalid equipment type.");
-                        return;
-                }
-                slot.SetItem(null); // Remove the item from the slot after equipping
-                inventoryManager.UpdateAmmoAndWeight(); // Update inventory stats
-            }
-            else
-            {
-                Debug.LogWarning("Invalid item for equipping.");
-            }
-        }
+        #region Inventory Management
+   
+ 
+        #endregion
     }
 }

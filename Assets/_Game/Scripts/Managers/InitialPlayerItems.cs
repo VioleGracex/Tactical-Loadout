@@ -29,7 +29,7 @@ namespace Managers
 
         private void Start()
         {
-            StartCoroutine(InitializeAfterDelay());
+            //StartCoroutine(InitializeAfterDelay());
         }
 
         private IEnumerator InitializeAfterDelay()
@@ -53,7 +53,7 @@ namespace Managers
             AddInitialItems(inventoryManager);
         }
 
-        private void AddInitialItems(InventoryManager inventoryManager)
+        public void AddInitialItems(InventoryManager inventoryManager)
         {
             ItemDataSO[] items = GetInitialItems();
             foreach (var item in items)
@@ -71,6 +71,7 @@ namespace Managers
                 ResourcesCreator.CreateBasicHelmet(),
                 ResourcesCreator.CreatePistolAmmo(),
                 ResourcesCreator.CreateRifleAmmo(),
+                ResourcesCreator.CreateAdvancedBodyArmor(),
             };
         }
 

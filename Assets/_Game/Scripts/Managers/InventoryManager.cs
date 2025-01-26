@@ -13,28 +13,14 @@ namespace Managers
     public class InventoryManager : MonoBehaviour
     {
         #region Variables
+        public static InventoryManager Instance;
+
         [Header("Prefabs")]
         public GameObject slotPrefab;
 
-        [Header("Text Information")]
-        public TextMeshProUGUI pistolAmmoText;
-        public TextMeshProUGUI rifleAmmoText;
-        public TextMeshProUGUI weightText;
-        public TextMeshProUGUI itemNameText;
-        public TextMeshProUGUI itemWeightText;
-        public TextMeshProUGUI itemDescriptionText;
+        [Header("Text Information"), HideInInspector]
+        public TextMeshProUGUI pistolAmmoText, rifleAmmoText, weightText;
 
-        [Header("Stat Information")]
-        [SerializeField] private StatInfo damageInfo;
-        [SerializeField] private StatInfo defenseInfo;
-        [SerializeField] private StatInfo healInfo;
-        [SerializeField] private StatInfo weightInfo;
-
-        [Header("Item Information")]
-        public GameObject itemPopup;
-        public Image itemImage;
-        public Button actionButton;
-        public Button throwButton;
 
         [Header("Other")]
         public Transform inventoryParent;
@@ -43,51 +29,46 @@ namespace Managers
 
         [Header("Managers")]
         [SerializeField] private GameManager gameManager;
+        [SerializeField] private SlotManager slotManager;
+        [SerializeField] private InitialPlayerItems initialPlayerItems;
 
         [Header("Inventory Data")]
-        private List<Slot> slots = new List<Slot>();
-        private Dictionary<int, ItemDataSO> itemDictionary = new Dictionary<int, ItemDataSO>();
-        private Dictionary<string, List<Slot>> itemSlotDictionary = new Dictionary<string, List<Slot>>();
+        public List<Slot> slots = new List<Slot>();
+        public Dictionary<int, ItemDataSO> itemDictionary = new Dictionary<int, ItemDataSO>();
+        public Dictionary<string, List<Slot>> itemSlotDictionary = new Dictionary<string, List<Slot>>();
         private string savePath;
-        public int pistolAmmoCount = 0;
-        public int rifleAmmoCount = 0;
+        
+        [HideInInspector]
+        public int pistolAmmoCount = 0, rifleAmmoCount = 0;
         private float totalWeight = 0;
 
         #endregion
 
         #region Unity Methods
+        private void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
+            slotManager.InitializeSlots(30);
+        }
+
         private void Start()
         {
             savePath = Path.Combine(Application.persistentDataPath, "inventory.json");
+            // check if there is a save file else 
+            initialPlayerItems.AddInitialItems(Instance);
             sortButton.onClick.AddListener(SortInventory);
-            InitializeInventory();
-            itemPopup.SetActive(false);
             UpdateAmmoAndWeight();
-
         }
         #endregion
 
         #region Inventory Initialization and Loading
-        private void InitializeInventory()
-        {
-            foreach (Transform child in inventoryParent)
-            {
-                Destroy(child.gameObject);
-            }
-            slots.Clear();
-            itemDictionary.Clear();
-            itemSlotDictionary.Clear();
-
-            for (int i = 0; i < 30; i++)
-            {
-                GameObject newSlot = Instantiate(slotPrefab, inventoryParent);
-                Slot slot = newSlot.GetComponent<Slot>();
-                slot.id = i;
-                slot.OnSlotClicked += ShowItemPopup;
-                slot.OnItemSwapped += HandleItemSwapped;
-                slots.Add(slot);
-            }
-        }
 
         public void SaveInventory()
         {
@@ -108,101 +89,9 @@ namespace Managers
             SaveInventory();
         }
 
-        private void ShowItemPopup(ItemDataSO item, Slot slot)
-        {
-            if (item == null) return;
-
-            itemNameText.text = item.itemName;
-            itemImage.sprite = item.itemImage;
-            itemDescriptionText.text = item.description;
-
-            // Hide all stat texts initially
-            damageInfo.Hide();
-            defenseInfo.Hide();
-            weightInfo.Hide();
-            healInfo.Hide();
-
-            // Update and show stat texts based on item properties
-            if (item.type == ItemType.Consumable)
-            {
-                if (item.healValue > 0)
-                {
-                    healInfo.SetStat(item.healValue.ToString());
-                }
-            }
-            else if (item.type == ItemType.Equipment || item.type == ItemType.Pistol || item.type == ItemType.Rifle)
-            {
-                if (item.damageModifier > 0)
-                {
-                    damageInfo.SetStat(item.damageModifier.ToString());
-                }
-                if (item.defenseModifier > 0)
-                {
-                    defenseInfo.SetStat(item.defenseModifier.ToString());
-                }
-                
-            }
-            float totalWeight = item.weightPerUnit;
-            if (slot.GetCurrentAmount() > 1)
-            {
-                totalWeight *= slot.GetCurrentAmount();
-            }
-            weightInfo.SetStat(totalWeight.ToString("F2"));
-
-            actionButton.onClick.RemoveAllListeners();
-            throwButton.onClick.RemoveAllListeners();
-
-            switch (item.type)
-            {
-                case ItemType.Ammo:
-                    actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Buy";
-                    actionButton.onClick.AddListener(() => BuyItem(item, 100));
-                    break;
-                case ItemType.Consumable:
-                    actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Heal";
-                    actionButton.onClick.AddListener(() => ConsumeHealItem(item, slot, 1));
-                    break;
-                case ItemType.Equipment:
-                case ItemType.Pistol:
-                case ItemType.Rifle:
-                    actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Equip";
-                    actionButton.onClick.AddListener(() => Equip(item, slot));
-                    break;
-            }
-
-            throwButton.onClick.AddListener(() => ThrowItem(slot));
-
-            itemPopup.SetActive(true);
-        }
-
-        private void BuyItem(ItemDataSO item, int amount)
-        {
-            AddItem(item, amount);
-            itemPopup.SetActive(false);
-        }
-        private void ConsumeHealItem(ItemDataSO item, Slot slot, int amount)
-        {
-            gameManager.Heal(item.healValue);
-            ConsumeItem(item, slot, amount);
-        }
-        private void ConsumeItem(ItemDataSO item, Slot slot, int amount)
+        public void ConsumeItem(ItemDataSO item, Slot slot, int amount)
         {
             DeductItem(item, amount);
-            itemPopup.SetActive(false);
-        }
-
-        private void Equip(ItemDataSO item, Slot slot)
-        {
-            gameManager.Equip(item, slot);
-            slot.SetEquippedText(); // Set the slot text to "E"
-            UpdateAmmoAndWeight(); // Update inventory stats
-            itemPopup.SetActive(false);
-        }
-
-        private void ThrowItem(Slot slot)
-        {
-            RemoveItem(slot.id);
-            itemPopup.SetActive(false);
         }
 
         public void AddItem(ItemDataSO item, int amount)
@@ -318,24 +207,6 @@ namespace Managers
             }
             UpdateAmmoAndWeight();
         }
-
-        private void HandleItemSwapped(Slot originalSlot, Slot newSlot) //**
-        {
-            ItemDataSO originalItem = originalSlot.GetItem();
-            ItemDataSO newItem = newSlot.GetItem();
-
-            if (originalItem != null)
-            {
-                itemSlotDictionary[originalItem.itemName].Remove(originalSlot);
-                itemSlotDictionary[originalItem.itemName].Add(newSlot);
-            }
-
-            if (newItem != null)
-            {
-                itemSlotDictionary[newItem.itemName].Remove(newSlot);
-                itemSlotDictionary[newItem.itemName].Add(originalSlot);
-            }
-        }
         #endregion
 
         #region Ammo and Weight Calculation
@@ -372,8 +243,8 @@ namespace Managers
 
         private void UpdateAmmoText()
         {
-            pistolAmmoText.text = $"Pistol Ammo: {pistolAmmoCount}";
-            rifleAmmoText.text = $"Rifle Ammo: {rifleAmmoCount}";
+            pistolAmmoText.text = $"{pistolAmmoCount}";
+            rifleAmmoText.text = $"{rifleAmmoCount}";
         }
 
         private void UpdateWeightText()

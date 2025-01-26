@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using Inventory;
 using Data;
+using Game;
 
 namespace Managers
 {
@@ -17,10 +18,8 @@ namespace Managers
         public Button lootSelectedButton;
 
         private InventoryManager inventoryManager;
-        private List<ItemDataSO> generatedLoot = new List<ItemDataSO>();
-        private List<ItemDataSO> selectedLoot = new List<ItemDataSO>();
-/*         [Header("Managers")]
-        ResourcesCreator resourcesCreator; */
+        private List<(ItemDataSO item, int amount)> generatedLoot = new List<(ItemDataSO, int)>();
+        private List<(ItemDataSO item, int amount)> selectedLoot = new List<(ItemDataSO, int)>();
 
         void Start()
         {
@@ -43,14 +42,18 @@ namespace Managers
             for (int i = 0; i < lootCount; i++)
             {
                 ItemDataSO lootItem = GenerateRandomLootItem(enemyLevel);
-                generatedLoot.Add(lootItem);
+                int amount = Random.Range(1, lootItem.maxStack + 1);
+                generatedLoot.Add((lootItem, amount));
 
+                // Instantiate the loot item prefab
                 GameObject lootItemObj = Instantiate(lootItemPrefab, lootContent);
-                lootItemObj.GetComponentInChildren<TextMeshProUGUI>().text = lootItem.itemName;
-                lootItemObj.GetComponentInChildren<Image>().sprite = lootItem.itemImage;
-                Toggle lootToggle = lootItemObj.GetComponent<Toggle>();
-                lootToggle.isOn = false;
-                lootToggle.onValueChanged.AddListener((isOn) => OnLootItemSelected(isOn, lootItem));
+
+                // Get the LootToggle component and set the item's name, amount, and image
+                LootToggle lootToggle = lootItemObj.GetComponent<LootToggle>();
+                lootToggle.SetLootItem(lootItem.itemName, amount, lootItem.itemImage);
+
+                // Add a listener to the toggle
+                lootToggle.AddToggleListener((isOn) => OnLootItemSelected(isOn, lootItem, amount));
             }
 
             lootPopup.SetActive(true);
@@ -67,8 +70,8 @@ namespace Managers
             }
             else if (enemyLevel <= 5)
             {
-               possibleLoot.Add(ResourcesCreator.CreateMediumMedkit());
-               possibleLoot.Add(ResourcesCreator.CreateRifleAmmo());
+                possibleLoot.Add(ResourcesCreator.CreateMediumMedkit());
+                possibleLoot.Add(ResourcesCreator.CreateRifleAmmo());
             }
             else
             {
@@ -79,15 +82,16 @@ namespace Managers
             int randomIndex = Random.Range(0, possibleLoot.Count);
             return possibleLoot[randomIndex];
         }
-        void OnLootItemSelected(bool isOn, ItemDataSO lootItem)
+
+        void OnLootItemSelected(bool isOn, ItemDataSO lootItem, int amount)
         {
             if (isOn)
             {
-                selectedLoot.Add(lootItem);
+                selectedLoot.Add((lootItem, amount));
             }
             else
             {
-                selectedLoot.Remove(lootItem);
+                selectedLoot.Remove((lootItem, amount));
             }
         }
 
@@ -95,21 +99,24 @@ namespace Managers
         {
             if (lootAll)
             {
-                foreach (var lootItem in generatedLoot)
+                foreach (var (lootItem, amount) in generatedLoot)
                 {
-                    inventoryManager.AddItem(lootItem, lootItem.maxStack);
+                    // Use the stored amount when looting all items
+                    inventoryManager.AddItem(lootItem, amount);
                 }
             }
             else
             {
-                foreach (var lootItem in selectedLoot)
+                foreach (var (lootItem, amount) in selectedLoot)
                 {
-                    inventoryManager.AddItem(lootItem, lootItem.maxStack);
+                    // Use the amount stored when the item was selected
+                    inventoryManager.AddItem(lootItem, amount);
                 }
             }
 
             selectedLoot.Clear();
             lootPopup.SetActive(false);
+            GameManager.Instance.SpawnNextEnemy();
             SaveInventory();
         }
 
