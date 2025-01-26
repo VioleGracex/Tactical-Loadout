@@ -19,6 +19,8 @@ namespace Managers
         private InventoryManager inventoryManager;
         private List<ItemDataSO> generatedLoot = new List<ItemDataSO>();
         private List<ItemDataSO> selectedLoot = new List<ItemDataSO>();
+/*         [Header("Managers")]
+        ResourcesCreator resourcesCreator; */
 
         void Start()
         {
@@ -60,40 +62,23 @@ namespace Managers
 
             if (enemyLevel <= 3)
             {
-                possibleLoot.Add(CreateItem("Small Health Potion", ItemType.Consumable, EquipmentType.None, 1, 0.5f, "Restores 20 HP", 0, 0, 20));
-                possibleLoot.Add(CreateItem("Basic Ammo", ItemType.Ammo, EquipmentType.None, 50, 0.01f, "Basic ammo for pistols", 0, 0, 0));
+                possibleLoot.Add(ResourcesCreator.CreateMedkit());
+                possibleLoot.Add(ResourcesCreator.CreatePistolAmmo());
             }
             else if (enemyLevel <= 5)
             {
-                possibleLoot.Add(CreateItem("Medium Health Potion", ItemType.Consumable, EquipmentType.None, 1, 0.5f, "Restores 50 HP", 0, 0, 50));
-                possibleLoot.Add(CreateItem("Advanced Ammo", ItemType.Ammo, EquipmentType.None, 100, 0.03f, "Advanced ammo for rifles", 0, 0, 0));
+               possibleLoot.Add(ResourcesCreator.CreateMediumMedkit());
+               possibleLoot.Add(ResourcesCreator.CreateRifleAmmo());
             }
             else
             {
-                possibleLoot.Add(CreateItem("Large Health Potion", ItemType.Consumable, EquipmentType.None, 1, 1.0f, "Restores 100 HP", 0, 0, 100));
-                possibleLoot.Add(CreateItem("High-Caliber Ammo", ItemType.Ammo, EquipmentType.None, 100, 0.05f, "High-caliber ammo for advanced weapons", 0, 0, 0));
+                possibleLoot.Add(ResourcesCreator.CreateAdvancedBodyArmor());
+                possibleLoot.Add(ResourcesCreator.CreateAdvancedHelmet());
             }
 
             int randomIndex = Random.Range(0, possibleLoot.Count);
             return possibleLoot[randomIndex];
         }
-
-        ItemDataSO CreateItem(string itemName, ItemType type, EquipmentType equipmentType, int maxStack, float weightPerUnit, string description, int damageModifier, int defenseModifier, int healValue)
-        {
-            ItemDataSO newItem = ScriptableObject.CreateInstance<ItemDataSO>();
-            newItem.itemName = itemName;
-            newItem.type = type;
-            newItem.equipmentType = equipmentType;
-            newItem.maxStack = maxStack;
-            newItem.weightPerUnit = weightPerUnit;
-            newItem.description = description;
-            newItem.damageModifier = damageModifier;
-            newItem.defenseModifier = defenseModifier;
-            newItem.healValue = healValue;
-
-            return newItem;
-        }
-
         void OnLootItemSelected(bool isOn, ItemDataSO lootItem)
         {
             if (isOn)

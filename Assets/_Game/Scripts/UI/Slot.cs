@@ -20,7 +20,7 @@ namespace Inventory
         public delegate void ItemSwappedHandler(Slot originalSlot, Slot newSlot);
         public event ItemSwappedHandler OnItemSwapped;
 
-        public void SetItem(ItemDataSO item, int amount = 1)
+        public void SetItem(ItemDataSO item, int amount = 0)
         {
             currentItem = item;
             currentAmount = amount;
@@ -47,6 +47,14 @@ namespace Inventory
             currentAmount = amount;
             UpdateItemAmountText();
         }
+        public void SetEquippedText()
+        {
+            if (itemAmountText != null)
+            {
+                itemAmountText.text = "E";
+                itemAmountText.enabled = true;
+            }
+        }
 
         public void DeductAmount(int amount)
         {
@@ -72,11 +80,8 @@ namespace Inventory
             else
             {
                 itemImage.enabled = false;
-                if (itemAmountText != null)
-                {
-                    itemAmountText.text = string.Empty;
-                    itemAmountText.enabled = false;
-                }
+                itemAmountText.text = string.Empty;
+                itemAmountText.enabled = false;
             }
         }
 
@@ -88,7 +93,7 @@ namespace Inventory
                 return;
             }
 
-            if (currentItem != null && (currentItem.type == ItemType.Consumable || currentItem.type == ItemType.Ammo))
+            if (currentItem != null && currentAmount > 0 && currentItem.maxStack > 1)
             {
                 itemAmountText.text = currentAmount.ToString();
                 itemAmountText.enabled = true;

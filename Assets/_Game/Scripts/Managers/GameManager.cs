@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UI;
+using Inventory;
 
 namespace Game
 {
@@ -36,6 +37,7 @@ namespace Game
 
         private bool canShoot = true;
         private float shootCooldown = 1.0f;
+        private int enemyLevel = 1;
 
         void Awake()
         {
@@ -76,11 +78,14 @@ namespace Game
             enemyHPBar.UpdateHealthBar(enemy.hp);
             //enemySprite = enemyData.image;
         }
-        public void Heal()
+
+        public void Heal(int value)
         {
-            inventoryManager.ConsumeItemByName("Medkit", 1);    
+            inventoryManager.ConsumeItemByName("Medkit", 1);
             player.Heal(50);
+            playerHPBar.UpdateHealthBar(player.hp);
         }
+
         void Shoot()
         {
             if (!canShoot)
@@ -138,6 +143,7 @@ namespace Game
         void SpawnNextEnemy()
         {
             enemyData = Instantiate(enemyData); // Clone the enemyData to reset values if necessary
+            enemyData.level = enemyLevel++;
             SpawnEnemy();
         }
 
@@ -150,6 +156,56 @@ namespace Game
             else
             {
                 Debug.LogError("InventoryManager not found in the scene.");
+            }
+        }
+
+        public void Equip(ItemDataSO item, Slot slot)
+        {
+            if (item == null)
+            {
+                Debug.LogWarning("Invalid item for equipping.");
+                return;
+            }
+            else if (item.equipmentType != EquipmentType.None)
+            {
+                switch (item.equipmentType)
+                {
+                    case EquipmentType.Head:
+                        player.headArmor = item;
+                        Debug.Log($"Equipped {item.itemName} as head armor.");
+                        break;
+                    case EquipmentType.Torso:
+                        player.torsoArmor = item;
+                        Debug.Log($"Equipped {item.itemName} as torso armor.");
+                        break;
+                    default:
+                        Debug.LogWarning("Invalid equipment type.");
+                        return;
+                }
+                slot.SetEquippedText();
+            }
+            else if(item.type == ItemType.Pistol || item.type == ItemType.Rifle)
+            {
+                switch (item.type)
+                {
+                    case ItemType.Pistol:
+                        player.pistol = item;
+                        Debug.Log($"Equipped {item.itemName} as pistol.");
+                        break;
+                    case ItemType.Rifle:
+                        player.rifle = item;
+                        Debug.Log($"Equipped {item.itemName} as rifle.");
+                        break;
+                    default:
+                        Debug.LogWarning("Invalid equipment type.");
+                        return;
+                }
+                slot.SetItem(null); // Remove the item from the slot after equipping
+                inventoryManager.UpdateAmmoAndWeight(); // Update inventory stats
+            }
+            else
+            {
+                Debug.LogWarning("Invalid item for equipping.");
             }
         }
     }

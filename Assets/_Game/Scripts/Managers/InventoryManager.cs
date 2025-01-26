@@ -24,10 +24,17 @@ namespace Managers
         public TextMeshProUGUI itemWeightText;
         public TextMeshProUGUI itemDescriptionText;
 
+        [Header("Stat Information")]
+        [SerializeField] private StatInfo damageInfo;
+        [SerializeField] private StatInfo defenseInfo;
+        [SerializeField] private StatInfo healInfo;
+        [SerializeField] private StatInfo weightInfo;
+
         [Header("Item Information")]
         public GameObject itemPopup;
         public Image itemImage;
         public Button actionButton;
+        public Button throwButton;
 
         [Header("Other")]
         public Transform inventoryParent;
@@ -56,6 +63,7 @@ namespace Managers
             InitializeInventory();
             itemPopup.SetActive(false);
             UpdateAmmoAndWeight();
+
         }
         #endregion
 
@@ -83,7 +91,7 @@ namespace Managers
 
         public void SaveInventory()
         {
-            
+            // Implement Save functionality if needed
         }
         #endregion
 
@@ -108,7 +116,41 @@ namespace Managers
             itemImage.sprite = item.itemImage;
             itemDescriptionText.text = item.description;
 
+            // Hide all stat texts initially
+            damageInfo.Hide();
+            defenseInfo.Hide();
+            weightInfo.Hide();
+            healInfo.Hide();
+
+            // Update and show stat texts based on item properties
+            if (item.type == ItemType.Consumable)
+            {
+                if (item.healValue > 0)
+                {
+                    healInfo.SetStat(item.healValue.ToString());
+                }
+            }
+            else if (item.type == ItemType.Equipment || item.type == ItemType.Pistol || item.type == ItemType.Rifle)
+            {
+                if (item.damageModifier > 0)
+                {
+                    damageInfo.SetStat(item.damageModifier.ToString());
+                }
+                if (item.defenseModifier > 0)
+                {
+                    defenseInfo.SetStat(item.defenseModifier.ToString());
+                }
+                
+            }
+            float totalWeight = item.weightPerUnit;
+            if (slot.GetCurrentAmount() > 1)
+            {
+                totalWeight *= slot.GetCurrentAmount();
+            }
+            weightInfo.SetStat(totalWeight.ToString("F2"));
+
             actionButton.onClick.RemoveAllListeners();
+            throwButton.onClick.RemoveAllListeners();
 
             switch (item.type)
             {
@@ -118,7 +160,7 @@ namespace Managers
                     break;
                 case ItemType.Consumable:
                     actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Heal";
-                    actionButton.onClick.AddListener(() => ConsumeItem(item, slot, 1));
+                    actionButton.onClick.AddListener(() => ConsumeHealItem(item, slot, 1));
                     break;
                 case ItemType.Equipment:
                 case ItemType.Pistol:
@@ -128,6 +170,8 @@ namespace Managers
                     break;
             }
 
+            throwButton.onClick.AddListener(() => ThrowItem(slot));
+
             itemPopup.SetActive(true);
         }
 
@@ -136,7 +180,11 @@ namespace Managers
             AddItem(item, amount);
             itemPopup.SetActive(false);
         }
-
+        private void ConsumeHealItem(ItemDataSO item, Slot slot, int amount)
+        {
+            gameManager.Heal(item.healValue);
+            ConsumeItem(item, slot, amount);
+        }
         private void ConsumeItem(ItemDataSO item, Slot slot, int amount)
         {
             DeductItem(item, amount);
@@ -145,7 +193,16 @@ namespace Managers
 
         private void Equip(ItemDataSO item, Slot slot)
         {
-            // Implement equip logic
+            gameManager.Equip(item, slot);
+            slot.SetEquippedText(); // Set the slot text to "E"
+            UpdateAmmoAndWeight(); // Update inventory stats
+            itemPopup.SetActive(false);
+        }
+
+        private void ThrowItem(Slot slot)
+        {
+            RemoveItem(slot.id);
+            itemPopup.SetActive(false);
         }
 
         public void AddItem(ItemDataSO item, int amount)
@@ -217,7 +274,6 @@ namespace Managers
         private void DeductItem(ItemDataSO item, int amount)
         {
             if (!itemSlotDictionary.ContainsKey(item.itemName)) return;
-
             foreach (Slot s in itemSlotDictionary[item.itemName])
             {
                 int currentAmount = s.GetCurrentAmount();
@@ -260,7 +316,6 @@ namespace Managers
                     }
                 }
             }
-
             UpdateAmmoAndWeight();
         }
 
@@ -301,7 +356,7 @@ namespace Managers
                         {
                             pistolAmmoCount += slot.GetCurrentAmount();
                         }
-                        else if (item.itemName.Contains("5.45x39"))
+                        else if (item.itemName.Contains("5.45х39mm"))
                         {
                             rifleAmmoCount += slot.GetCurrentAmount();
                         }
