@@ -1,8 +1,8 @@
-using Data;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
+using Data;
 
 namespace Inventory
 {
@@ -10,9 +10,33 @@ namespace Inventory
     {
         public Image itemImage;
         public TextMeshProUGUI itemAmountText;
+
         [SerializeField] private ItemDataSO currentItem;
+        [SerializeField] private int currentAmount;
+        [SerializeField] private bool isEquipped; // Track equipped state independently
         [SerializeField] public int id;
-        private int currentAmount = 0;
+
+        public ItemDataSO CurrentItem
+        {
+            get => currentItem;
+            set
+            {
+                currentItem = value;
+                UpdateUI();
+            }
+        }
+
+        public int CurrentAmount
+        {
+            get => currentAmount;
+            set
+            {
+                currentAmount = value;
+                UpdateItemAmountText();
+            }
+        }
+
+        public bool IsEquipped => isEquipped; // Use the dedicated field
 
         public delegate void SlotClickedHandler(ItemDataSO item, Slot slot);
         public event SlotClickedHandler OnSlotClicked;
@@ -20,62 +44,32 @@ namespace Inventory
         public delegate void ItemSwappedHandler(Slot originalSlot, Slot newSlot);
         public event ItemSwappedHandler OnItemSwapped;
 
-        public void SetItem(ItemDataSO item, int amount = 0)
+        public Slot(ItemDataSO item = null, int amount = 0, bool isEquipped = false)
         {
-            currentItem = item;
-            currentAmount = amount;
+            CurrentItem = item;
+            CurrentAmount = amount;
+            this.isEquipped = isEquipped; // Initialize equipped state
             UpdateUI();
         }
 
-        public bool IsEmpty()
+        public void SetItem(ItemDataSO item, int amount)
         {
-            return currentItem == null;
+            CurrentItem = item;
+            CurrentAmount = amount;
         }
 
-        public ItemDataSO GetItem()
+        public void SetEquippedText(bool equipped)
         {
-            return currentItem;
-        }
-
-        public int GetCurrentAmount()
-        {
-            return currentAmount;
-        }
-
-        public void SetCurrentAmount(int amount)
-        {
-            currentAmount = amount;
-            UpdateItemAmountText();
-        }
-         public void SetEquippedText()
-        {
-            if(isEquipped())
-            {
-                itemAmountText.text = string.Empty;
-                itemAmountText.enabled = false;
-            }
-            else 
-            {
-                itemAmountText.text = "E";
-                itemAmountText.enabled = true;
-            }
-        }
-
-        public bool isEquipped()
-        {
-            return itemAmountText.text == "E";
+            isEquipped = equipped; // Update the equipped state
+            itemAmountText.text = equipped ? "E" : string.Empty;
         }
 
         public void DeductAmount(int amount)
         {
-            currentAmount -= amount;
-            if (currentAmount <= 0)
+            CurrentAmount -= amount;
+            if (CurrentAmount <= 0)
             {
-                SetItem(null);
-            }
-            else
-            {
-                UpdateItemAmountText();
+                CurrentItem = null;
             }
         }
 
@@ -85,13 +79,17 @@ namespace Inventory
             {
                 itemImage.sprite = currentItem.itemImage;
                 itemImage.enabled = true;
-                UpdateItemAmountText();
+
+                // Update the item amount text if the item is not equipped
+                if (!isEquipped)
+                {
+                    UpdateItemAmountText();
+                }
             }
             else
             {
                 itemImage.enabled = false;
                 itemAmountText.text = string.Empty;
-                itemAmountText.enabled = false;
             }
         }
 
@@ -106,12 +104,10 @@ namespace Inventory
             if (currentItem != null && currentAmount > 0 && currentItem.maxStack > 1)
             {
                 itemAmountText.text = currentAmount.ToString();
-                itemAmountText.enabled = true;
             }
             else
             {
                 itemAmountText.text = string.Empty;
-                itemAmountText.enabled = false;
             }
         }
 
@@ -119,7 +115,6 @@ namespace Inventory
         {
             return currentItem != null && itemImage.enabled;
         }
-
         public void OnDrop(PointerEventData eventData)
         {
             DragDropItem draggedItem = eventData.pointerDrag.GetComponent<DragDropItem>();
@@ -129,38 +124,26 @@ namespace Inventory
 
                 if (originalSlot != null && originalSlot != this && originalSlot.CanBeDragged())
                 {
-                    ItemDataSO draggedItemData = originalSlot.GetItem();
-                    int draggedAmount = originalSlot.GetCurrentAmount();
+                    ItemDataSO draggedItemData = originalSlot.CurrentItem;
+                    int draggedAmount = originalSlot.CurrentAmount;
 
-                    if (currentItem != null && currentItem.itemName == draggedItemData.itemName)
-                    {
-                        // Items are of the same type, merge them
-                        int totalAmount = currentAmount + draggedAmount;
-                        int maxStack = currentItem.maxStack;
+                    // Swap equipped state
+                    bool originalSlotEquipped = originalSlot.IsEquipped;
+                    bool thisSlotEquipped = this.IsEquipped;
 
-                        if (totalAmount <= maxStack)
-                        {
-                            // Merge completely
-                            SetCurrentAmount(totalAmount);
-                            originalSlot.SetItem(null); // Clear the original slot
-                        }
-                        else
-                        {
-                            // Merge partially and leave the rest in the original slot
-                            SetCurrentAmount(maxStack);
-                            originalSlot.SetCurrentAmount(totalAmount - maxStack);
-                        }
-                    }
-                    else
-                    {
-                        // Swap items if they are of different types
-                        ItemDataSO tempItem = currentItem;
-                        int tempAmount = currentAmount;
+                    // Swap items and amounts
+                    (CurrentItem, originalSlot.CurrentItem) = (originalSlot.CurrentItem, CurrentItem);
+                    (CurrentAmount, originalSlot.CurrentAmount) = (originalSlot.CurrentAmount, CurrentAmount);
 
-                        SetItem(draggedItemData, draggedAmount);
-                        originalSlot.SetItem(tempItem, tempAmount);
-                    }
+                    // Update the equipped state for both slots
+                    originalSlot.SetEquippedText(thisSlotEquipped);
+                    this.SetEquippedText(originalSlotEquipped);
 
+                    // Update the UI for both slots
+                    originalSlot.UpdateUI();
+                    this.UpdateUI();
+
+                    // Notify the equipment manager of the swap
                     OnItemSwapped?.Invoke(originalSlot, this);
                 }
                 else
@@ -170,10 +153,9 @@ namespace Inventory
                 }
             }
         }
-
         public void OnPointerClick(PointerEventData eventData)
         {
-            OnSlotClicked?.Invoke(currentItem, this);
+            OnSlotClicked?.Invoke(CurrentItem, this);
         }
     }
 }

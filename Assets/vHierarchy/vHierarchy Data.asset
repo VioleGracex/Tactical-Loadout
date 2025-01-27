@@ -23,6 +23,7 @@ MonoBehaviour:
         - globalObjectIdString: GlobalObjectId_V1-2-99c9720ab356a0642a771bea13969a05-2062315911-0
         - globalObjectIdString: GlobalObjectId_V1-2-99c9720ab356a0642a771bea13969a05-335265432-0
         - globalObjectIdString: GlobalObjectId_V1-2-99c9720ab356a0642a771bea13969a05-43021240-0
+        - globalObjectIdString: GlobalObjectId_V1-2-99c9720ab356a0642a771bea13969a05-6664048404433565712-0
         values:
         - colorIndex: 7
           iconNameOrGuid: 
@@ -34,3 +35,5 @@ MonoBehaviour:
           iconNameOrGuid: PreMatSphere
         - colorIndex: 2
           iconNameOrGuid: 
+        - colorIndex: 0
+          iconNameOrGuid: Settings Icon
