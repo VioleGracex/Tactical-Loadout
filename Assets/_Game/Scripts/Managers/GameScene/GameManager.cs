@@ -34,6 +34,8 @@ namespace Game
         [SerializeField] private Toggle pistolToggle;
         [SerializeField] private Toggle rifleToggle;
         [SerializeField] private GameObject gameOverPopup;
+        [SerializeField] private ParticleSystem playerBloodParticles;
+        [SerializeField] private ParticleSystem enemyBloodParticles;
 
         private bool canShoot = true;
         private float shootCooldown = 0.3f;
@@ -67,14 +69,6 @@ namespace Game
 
         private void InitializeSceneData()
         {
-            LocalSceneData sceneData = FindFirstObjectByType<LocalSceneData>();
-            if (sceneData == null)
-            {
-                Debug.LogError("LocalSceneData not found in the scene.");
-                return;
-            }
-
-
             // Initialize player and enemy
             InitializePlayerAndEnemy();
         }
@@ -179,7 +173,9 @@ namespace Game
                 }
 
                 enemy.TakeDamage(damage);
+                enemyBloodParticles.Play();
                 player.TakeDamageFromEnemy();
+                playerBloodParticles.Play();
             }
             else
             {
