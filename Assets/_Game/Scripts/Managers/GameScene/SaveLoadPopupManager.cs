@@ -47,7 +47,7 @@ public class SaveLoadPopupManager : MonoBehaviour
         _isSaving = isSaving;
 
         // Update the title text based on the mode
-        titleText.text = _isSaving ? "Save Game" : "Load Game";
+        titleText.text = _isSaving ? "Сохранить игру" : "Загрузить игру";
 
         // Set the appropriate toggle based on the mode
         if (_isSaving)
@@ -84,7 +84,7 @@ public class SaveLoadPopupManager : MonoBehaviour
             _isSaving = saveToggle.isOn;
 
             // Update the title text
-            titleText.text = _isSaving ? "Save Game" : "Load Game";
+            titleText.text = _isSaving ? "Сохранить игру" : "Загрузить игру";
 
             // Update the mode for all save slots
             foreach (var saveSlot in saveSlots)

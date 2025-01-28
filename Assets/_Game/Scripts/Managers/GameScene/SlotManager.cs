@@ -19,6 +19,7 @@ namespace Managers
         [Header("Managers")]
         [SerializeField] ItemPopupManager itemPopupManager;
         [SerializeField] EquipmentManager equipmentManager;
+        [SerializeField] InventoryManager inventoryManager;
 
         public void InitializeSlots(int slotCount)
         {
@@ -26,9 +27,9 @@ namespace Managers
             {
                 Destroy(child.gameObject);
             }
-            InventoryManager.Instance.slots.Clear();
-            InventoryManager.Instance.itemDictionary.Clear();
-            InventoryManager.Instance.itemSlotDictionary.Clear();
+            inventoryManager.slots.Clear();
+            inventoryManager.itemDictionary.Clear();
+            inventoryManager.itemSlotDictionary.Clear();
 
             for (int i = 0; i < slotCount; i++)
             {
@@ -37,7 +38,7 @@ namespace Managers
                 slot.id = i;
                 slot.OnSlotClicked += itemPopupManager.ShowItemPopup;
                 slot.OnItemSwapped += HandleItemSwapped;
-                InventoryManager.Instance.slots.Add(slot);
+                inventoryManager.slots.Add(slot);
             }
         }
 
@@ -49,17 +50,16 @@ namespace Managers
 
             if (originalItem != null)
             {
-                InventoryManager.Instance.itemSlotDictionary[originalItem.itemName].Remove(originalSlot);
-                InventoryManager.Instance.itemSlotDictionary[originalItem.itemName].Add(newSlot);
+                inventoryManager.itemSlotDictionary[originalItem.itemName].Remove(originalSlot);
+                inventoryManager.itemSlotDictionary[originalItem.itemName].Add(newSlot);
             }
 
             if (newItem != null)
             {
-                InventoryManager.Instance.itemSlotDictionary[newItem.itemName].Remove(newSlot);
-                InventoryManager.Instance.itemSlotDictionary[newItem.itemName].Add(originalSlot);
+                inventoryManager.itemSlotDictionary[newItem.itemName].Remove(newSlot);
+                inventoryManager.itemSlotDictionary[newItem.itemName].Add(originalSlot);
             }
-            if(newSlot.IsEquipped || originalSlot.IsEquipped)
-                equipmentManager.HandleSwappedSlots(originalSlot, newSlot);
         }
+       
     }
 }

@@ -8,7 +8,7 @@ namespace Data
         private static int nextId = 1;
 
         [SerializeField]
-        private int id;
+        public int id;
         public string itemName;
         public ItemType type;
         public EquipmentType equipmentType;
@@ -34,11 +34,13 @@ namespace Data
 
     public enum ItemType
     {
+        None,
         Ammo,
         Consumable,
         Equipment,
         Pistol,
         Rifle,
+        
     }
 
     public enum EquipmentType

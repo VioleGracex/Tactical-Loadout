@@ -36,17 +36,20 @@ public class SceneHandler : MonoBehaviour
         Debug.Log($"Loaded level: {levelName}");
     }
 
-    // Load from a save slot
-    public void LoadFromSaveSlot(string saveSlotName)
+    // Load a specific level by build index
+    public void LoadLevelByBuildIndex(int buildIndex)
     {
-        // Set the selected save path in the MenuManager
-        string savePath = Path.Combine(Application.persistentDataPath, $"{saveSlotName}.json");
-        MenuManager.Instance.SetSelectedSavePath(savePath);
-
-        // Load the game scene
-        UnityEngine.SceneManagement.SceneManager.LoadScene("GameScene");
-        Debug.Log($"Loading from save slot: {saveSlotName}");
+        if (buildIndex >= 0 && buildIndex < SceneManager.sceneCountInBuildSettings)
+        {
+            SceneManager.LoadScene(buildIndex);
+            Debug.Log($"Loaded level with build index: {buildIndex}");
+        }
+        else
+        {
+            Debug.LogError($"Invalid build index: {buildIndex}. Scene not loaded.");
+        }
     }
+
 
     // Pause the game
     public void PauseGame()
@@ -81,5 +84,15 @@ public class SceneHandler : MonoBehaviour
         {
             PauseGame();
         }
+    }
+
+    public void QuitGame()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false; // Exit play mode in the editor
+#else
+        Application.Quit(); // Quit the application in a build
+#endif
+        Debug.Log("Game quit.");
     }
 }

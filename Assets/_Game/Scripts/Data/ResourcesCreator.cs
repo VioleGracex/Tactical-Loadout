@@ -8,12 +8,12 @@ namespace Managers
         public static ItemDataSO CreateMedkit()
         {
             return InitialPlayerItems.CreateItem(
-                itemName: "Health Pack",
+                itemName: "Аптечка",
                 type: ItemType.Consumable,
                 equipmentType: EquipmentType.None,
                 maxStack: 6,
                 weightPerUnit: 0.5f,
-                description: "Restores 50 HP",
+                description: "Восстанавливает 50 HP",
                 damageModifier: 0,
                 defenseModifier: 0,
                 healValue: 50,
@@ -29,7 +29,7 @@ namespace Managers
                 equipmentType: EquipmentType.None,
                 maxStack: 50,
                 weightPerUnit: 0.01f,
-                description: "Basic ammo for pistols",
+                description: "Основные боеприпасы для пистолетов",
                 damageModifier: 0,
                 defenseModifier: 0,
                 healValue: 0,
@@ -40,12 +40,12 @@ namespace Managers
         public static ItemDataSO CreateMediumMedkit()
         {
             return InitialPlayerItems.CreateItem(
-                itemName: "Big Health Pack",
+                itemName: "Большая аптечка",
                 type: ItemType.Consumable,
                 equipmentType: EquipmentType.None,
                 maxStack: 1,
                 weightPerUnit: 0.5f,
-                description: "Restores 100 HP",
+                description: "Восстанавливает 100 HP",
                 damageModifier: 0,
                 defenseModifier: 0,
                 healValue: 100,
@@ -61,7 +61,7 @@ namespace Managers
                 equipmentType: EquipmentType.None,
                 maxStack: 100,
                 weightPerUnit: 0.03f,
-                description: "Advanced ammo for rifles",
+                description: "Усовершенствованные боеприпасы для винтовок",
                 damageModifier: 0,
                 defenseModifier: 0,
                 healValue: 0,
@@ -77,7 +77,7 @@ namespace Managers
                 equipmentType: EquipmentType.None,
                 maxStack: 100,
                 weightPerUnit: 0.05f,
-                description: "High-caliber ammo for advanced weapons",
+                description: "Крупнокалиберные боеприпасы для современного оружия",
                 damageModifier: 0,
                 defenseModifier: 0,
                 healValue: 0,
@@ -88,12 +88,12 @@ namespace Managers
         public static ItemDataSO CreateBasicBodyArmor()
         {
             return InitialPlayerItems.CreateItem(
-                itemName: "Basic Body Armor",
+                itemName: "Базовая броня",
                 type: ItemType.Equipment,
                 equipmentType: EquipmentType.Torso,
                 maxStack: 1,
                 weightPerUnit: 5.0f,
-                description: "Looks Nice",
+                description: "Выглядит неплохо",
                 damageModifier: 0,
                 defenseModifier: 0,
                 healValue: 0,
@@ -104,12 +104,12 @@ namespace Managers
         public static ItemDataSO CreateAdvancedBodyArmor()
         {
             return InitialPlayerItems.CreateItem(
-                itemName: "Advanced Body Armor",
+                itemName: "Улучшенная броня",
                 type: ItemType.Equipment,
                 equipmentType: EquipmentType.Torso,
                 maxStack: 1,
                 weightPerUnit: 10.0f,
-                description: "Provides advanced torso defense",
+                description: "Обеспечивает улучшенную защиту торса",
                 damageModifier: 0,
                 defenseModifier: 10,
                 healValue: 0,
@@ -120,12 +120,12 @@ namespace Managers
         public static ItemDataSO CreateBasicHelmet()
         {
             return InitialPlayerItems.CreateItem(
-                itemName: "Basic Helmet",
+                itemName: "Базовый шлем",
                 type: ItemType.Equipment,
                 equipmentType: EquipmentType.Head,
                 maxStack: 1,
                 weightPerUnit: 1.0f,
-                description: "Provides basic head defense",
+                description: "Обеспечивает базовую защиту головы",
                 damageModifier: 0,
                 defenseModifier: 0,
                 healValue: 0,
@@ -136,12 +136,12 @@ namespace Managers
         public static ItemDataSO CreateAdvancedHelmet()
         {
             return InitialPlayerItems.CreateItem(
-                itemName: "Advanced Helmet",
+                itemName: "Улучшенный шлем",
                 type: ItemType.Equipment,
                 equipmentType: EquipmentType.Head,
                 maxStack: 1,
                 weightPerUnit: 2.0f,
-                description: "Provides advanced head defense",
+                description: "Обеспечивает улучшенную защиту головы",
                 damageModifier: 0,
                 defenseModifier: 10,
                 healValue: 0,

@@ -21,7 +21,10 @@ namespace Managers
         public Button actionButton, throwButton;
 
         [Header("Managers")]
-        [SerializeField]EquipmentManager equipmentManager;
+        [SerializeField] EquipmentManager equipmentManager;
+        [SerializeField] InventoryManager inventoryManager;
+
+        [SerializeField] GameManager gameManager;
 
         private ItemDataSO currentItem;
         private Slot currentSlot;
@@ -29,6 +32,7 @@ namespace Managers
         private void Awake()
         {
             // Ensure buttons are cleared initially
+            gameManager = FindFirstObjectByType<GameManager>();
             actionButton.onClick.RemoveAllListeners();
             throwButton.onClick.RemoveAllListeners();
         }
@@ -85,7 +89,7 @@ namespace Managers
             if (slot.IsEquipped)
             {
                 // If the item is equipped, show the Unequip button
-                actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Unequip";
+                actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Снять";
                 actionButton.onClick.AddListener(() => Equip(item, slot));
             }
             else
@@ -94,17 +98,17 @@ namespace Managers
                 switch (item.type)
                 {
                     case ItemType.Ammo:
-                        actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Buy";
+                        actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Купить";
                         actionButton.onClick.AddListener(() => BuyItem(item, 100));
                         break;
                     case ItemType.Consumable:
-                        actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Heal";
+                        actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Лечить";
                         actionButton.onClick.AddListener(() => ConsumeHealItem(item, slot, 1));
                         break;
                     case ItemType.Equipment:
                     case ItemType.Pistol:
                     case ItemType.Rifle:
-                        actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Equip";
+                        actionButton.GetComponentInChildren<TextMeshProUGUI>().text = "Экипировать";
                         actionButton.onClick.AddListener(() => Equip(item, slot));
                         break;
                 }
@@ -118,14 +122,14 @@ namespace Managers
 
         private void BuyItem(ItemDataSO item, int amount)
         {
-            InventoryManager.Instance.AddItem(item, amount);
+            inventoryManager.AddItem(item, amount);
             HidePopup();
         }
 
         private void ConsumeHealItem(ItemDataSO item, Slot slot, int amount)
         {
-            GameManager.Instance.Heal(amount);
-            InventoryManager.Instance.ConsumeItem(item, slot, amount);
+            gameManager.Heal(amount);
+            inventoryManager.ConsumeItem(item, slot, amount);
             HidePopup();
         }
 
@@ -142,7 +146,7 @@ namespace Managers
             {
                 equipmentManager.EquipOrUnequip(slot.CurrentItem, slot);
             }
-            InventoryManager.Instance.RemoveItem(slot.id);
+            inventoryManager.RemoveItem(slot.id);
             HidePopup();
         }
 

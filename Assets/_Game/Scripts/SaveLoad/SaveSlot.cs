@@ -21,8 +21,11 @@ public class SaveSlot : MonoBehaviour
     // Flag to determine if the button is used for saving or loading
     [SerializeField]private bool _isSaving = false; // Default to saving mode
 
+    GameManager gameManager;
+
     private void Awake()
     {
+        gameManager = FindFirstObjectByType<GameManager>();
         // Add listener to the button
         saveSlotButton.onClick.AddListener(OnSaveSlotButtonClicked);
         SetSaveData();
@@ -105,7 +108,7 @@ public class SaveSlot : MonoBehaviour
     // Function to handle saving the game
     private void SaveGame()
     {
-        GameManager.Instance.SaveGame(slotId);
+        gameManager.SaveGame(slotId);
     }
 
     // Function to handle loading the game

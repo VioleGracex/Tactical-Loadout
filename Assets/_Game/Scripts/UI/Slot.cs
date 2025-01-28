@@ -3,6 +3,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 using Data;
+using Managers;
 
 namespace Inventory
 {
@@ -46,6 +47,7 @@ namespace Inventory
 
         public Slot(ItemDataSO item = null, int amount = 0, bool isEquipped = false)
         {
+            Debug.Log("Name in slot set " + item.name);
             CurrentItem = item;
             CurrentAmount = amount;
             this.isEquipped = isEquipped; // Initialize equipped state
@@ -54,8 +56,15 @@ namespace Inventory
 
         public void SetItem(ItemDataSO item, int amount)
         {
-            CurrentItem = item;
-            CurrentAmount = amount;
+            if (item != null)
+            {
+                Debug.Log("Name in slot " + item.name);
+                CurrentItem = item;
+                currentItem.itemName = item.itemName;
+                CurrentAmount = amount;
+            }
+
+
         }
 
         public void SetEquippedText(bool equipped)
@@ -75,6 +84,13 @@ namespace Inventory
 
         private void UpdateUI()
         {
+            // Check if itemImage is null or destroyed
+            if (itemImage == null)
+            {
+                Debug.LogWarning("itemImage is null or destroyed.");
+                return;
+            }
+
             if (currentItem != null && currentItem.itemImage != null)
             {
                 itemImage.sprite = currentItem.itemImage;
@@ -127,17 +143,28 @@ namespace Inventory
                     ItemDataSO draggedItemData = originalSlot.CurrentItem;
                     int draggedAmount = originalSlot.CurrentAmount;
 
-                    // Swap equipped state
-                    bool originalSlotEquipped = originalSlot.IsEquipped;
-                    bool thisSlotEquipped = this.IsEquipped;
+                    // Check if the original slot was equipped
+                    bool wasOriginalSlotEquipped = originalSlot.IsEquipped;
 
                     // Swap items and amounts
                     (CurrentItem, originalSlot.CurrentItem) = (originalSlot.CurrentItem, CurrentItem);
                     (CurrentAmount, originalSlot.CurrentAmount) = (originalSlot.CurrentAmount, CurrentAmount);
 
                     // Update the equipped state for both slots
-                    originalSlot.SetEquippedText(thisSlotEquipped);
-                    this.SetEquippedText(originalSlotEquipped);
+                    originalSlot.SetEquippedText(this.IsEquipped); // Original slot gets this slot's equipped state
+                    this.SetEquippedText(wasOriginalSlotEquipped); // This slot gets the original slot's equipped state
+
+                    // If the original slot was equipped and the item is equippable, update the equipped slot
+                    if (wasOriginalSlotEquipped && draggedItemData != null && IsItemEquippable(draggedItemData))
+                    {
+                        EquipmentManager.Instance.SwapEquippedSlot(draggedItemData, this);
+                    }
+
+                    // If this slot was equipped and the new item is equippable, update the equipped slot
+                    if (this.IsEquipped && CurrentItem != null && IsItemEquippable(CurrentItem))
+                    {
+                        EquipmentManager.Instance.SwapEquippedSlot(CurrentItem, this);
+                    }
 
                     // Update the UI for both slots
                     originalSlot.UpdateUI();
@@ -153,6 +180,12 @@ namespace Inventory
                 }
             }
         }
+        private bool IsItemEquippable(ItemDataSO item)
+        {
+            // Check if the item is of a type that can be equipped
+            return item.equipmentType != EquipmentType.None;
+        }
+
         public void OnPointerClick(PointerEventData eventData)
         {
             OnSlotClicked?.Invoke(CurrentItem, this);

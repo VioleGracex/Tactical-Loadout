@@ -18,6 +18,7 @@ namespace Managers
         public Button lootSelectedButton;
 
         private InventoryManager inventoryManager;
+        private GameManager gameManager;
         private List<(ItemDataSO item, int amount)> generatedLoot = new List<(ItemDataSO, int)>();
         private List<(ItemDataSO item, int amount)> selectedLoot = new List<(ItemDataSO, int)>();
 
@@ -27,6 +28,7 @@ namespace Managers
             lootSelectedButton.onClick.AddListener(() => EndLoot(false));
 
             inventoryManager = FindFirstObjectByType<InventoryManager>();
+            gameManager = FindFirstObjectByType<GameManager>();
         }
 
         public void GenerateLoot(int enemyLevel)
@@ -115,7 +117,7 @@ namespace Managers
             }
             selectedLoot.Clear();
             lootPopup.SetActive(false);
-            GameManager.Instance.SpawnNextEnemy();
+            gameManager.SpawnNextEnemy();
         }
     }
 }

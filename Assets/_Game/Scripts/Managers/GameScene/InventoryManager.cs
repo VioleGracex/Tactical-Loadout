@@ -15,12 +15,12 @@ namespace Managers
     public class InventoryManager : MonoBehaviour
     {
         #region Variables
-        public static InventoryManager Instance;
+
 
         [Header("Prefabs")]
         public GameObject slotPrefab;
 
-        [Header("Text Information"), HideInInspector]
+        [Header("Text Information")]
         public TextMeshProUGUI pistolAmmoText, rifleAmmoText, weightText;
 
 
@@ -30,7 +30,6 @@ namespace Managers
         public Button sortButton;
 
         [Header("Managers")]
-        [SerializeField] private GameManager gameManager;
         [SerializeField] private SlotManager slotManager;
         [SerializeField] private InitialPlayerItems initialPlayerItems;
 
@@ -38,7 +37,6 @@ namespace Managers
         public List<Slot> slots = new List<Slot>();
         public Dictionary<int, ItemDataSO> itemDictionary = new Dictionary<int, ItemDataSO>();
         public Dictionary<string, List<Slot>> itemSlotDictionary = new Dictionary<string, List<Slot>>();
-        private string savePath;
 
         [HideInInspector]
         public int pistolAmmoCount = 0, rifleAmmoCount = 0;
@@ -49,22 +47,11 @@ namespace Managers
         #region Unity Methods
         private void Awake()
         {
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
             slotManager.InitializeSlots(30);
         }
 
         private void Start()
         {
-            savePath = Path.Combine(Application.persistentDataPath, "inventory.json");
-            // check if there is a save file else 
-            initialPlayerItems.AddInitialItems(Instance);
             sortButton.onClick.AddListener(SortInventory);
         }
         #endregion
@@ -75,7 +62,7 @@ namespace Managers
             if (slotDataList == null)
             {
                 Debug.LogWarning("No inventory data provided for loading.");
-                UpdateAmmoAndWeight();
+
                 return;
             }
 
@@ -88,24 +75,33 @@ namespace Managers
             // Load items into slots
             foreach (var slotData in slotDataList)
             {
-                Debug.Log(slotData.item.itemName);
+                //Debug.Log(slotData.item.itemName);
                 // Ensure the slotId is within the valid range
                 if (slotData.slotId >= 0 && slotData.slotId < slots.Count)
                 {
+                   
                     // Set the item and amount in the corresponding slot
                     slots[slotData.slotId].SetItem(slotData.item.ToItemDataSO(), slotData.amount);
+
                 }
                 else
                 {
                     Debug.LogWarning($"Invalid slotId {slotData.slotId}. Skipping this item.");
                 }
             }
-
+            Debug.Log("finished loading items to slots updating weight.");
             UpdateAmmoAndWeight(); // Update UI after loading inventory
+                                   // Re-equip items using EquipmentManager
+                                   //FindFirstObjectByType<EquipmentManager>().LoadEquipment(saveData);
+
         }
         #endregion
 
         #region Inventory Management
+        public Slot GetSlotByItemId(int itemId)
+        {
+            return slots.FirstOrDefault(slot => slot.CurrentItem?.id == itemId);
+        }
         private void SortInventory()
         {
             slots = slots.OrderBy(slot => slot.CurrentItem?.itemName).ToList();
@@ -235,27 +231,45 @@ namespace Managers
 
             try
             {
+                if (slots == null)
+                {
+                    Debug.LogError("Slots list is null.");
+                    return;
+                }
+
                 foreach (var slot in slots)
                 {
-                    if (slot == null) continue; // Skip if slot is null
+                    if (slot == null)
+                    {
+                        Debug.LogWarning("Found a null slot in the slots list.");
+                        continue; // Skip if slot is null
+                    }
 
                     ItemDataSO item = slot.CurrentItem;
-                    if (item != null)
+                    if (item == null)
                     {
-                        if (item.type == ItemType.Ammo)
-                        {
-                            if (item.itemName.Contains("9x18mm"))
-                            {
-                                pistolAmmoCount += slot.CurrentAmount;
-                            }
-                            else if (item.itemName.Contains("5.45х39mm"))
-                            {
-                                rifleAmmoCount += slot.CurrentAmount;
-                            }
-                        }
-
-                        totalWeight += item.weightPerUnit * slot.CurrentAmount;
+                        //Debug.LogWarning($"Slot {slot.id} has a null item.");
+                        continue; // Skip if item is null
                     }
+
+                    if (item.type == ItemType.Ammo)
+                    {
+                        if (item.itemName.Contains("9x18mm"))
+                        {
+                            pistolAmmoCount += slot.CurrentAmount;
+                        }
+                        else if (item.itemName.Contains("5.45х39mm"))
+                        {
+                            rifleAmmoCount += slot.CurrentAmount;
+                        }
+                    }
+
+                    if (item.weightPerUnit <= 0)
+                    {
+                        Debug.LogWarning($"Item {item.itemName} has an invalid weightPerUnit: {item.weightPerUnit}");
+                    }
+
+                    totalWeight += item.weightPerUnit * slot.CurrentAmount;
                 }
             }
             catch (Exception ex)
@@ -266,7 +280,6 @@ namespace Managers
             UpdateAmmoText();
             UpdateWeightText();
         }
-
         private void UpdateAmmoText()
         {
             pistolAmmoText.text = $"{pistolAmmoCount}";

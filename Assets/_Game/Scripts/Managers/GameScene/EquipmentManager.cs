@@ -1,3 +1,4 @@
+using System.Linq;
 using Data;
 using Game;
 using Inventory;
@@ -8,6 +9,8 @@ namespace Managers
 {
     public class EquipmentManager : MonoBehaviour
     {
+        public static EquipmentManager Instance { get; private set; } // Singleton instance
+
         [Header("References")]
         [SerializeField] private Player player;
         [SerializeField] private InventoryManager inventoryManager;
@@ -27,6 +30,8 @@ namespace Managers
 
         private void UpdatePlayerStatsUI()
         {
+            if(player == null)
+                return;
             // Update head armor text
             headArmorText.text = player.headArmor != null
                 ? $"{player.headArmor.defenseModifier}"
@@ -40,12 +45,12 @@ namespace Managers
             // Update pistol damage text
             pistolDamageText.text = player.pistol != null
                 ? $"{player.pistol.damageModifier}"
-                : "0";
+                : "5";
 
             // Update rifle damage text
             rifleDamageText.text = player.rifle != null
                 ? $"{player.rifle.damageModifier}"
-                : "0";
+                : "15";
         }
 
         public void EquipOrUnequip(ItemDataSO item, Slot slot)
@@ -124,6 +129,52 @@ namespace Managers
             }
         }
 
+        private void Unequip(ItemDataSO item, Slot slot)
+        {
+            if (item == null)
+            {
+                Debug.LogWarning("Invalid item for unequipping.");
+                return;
+            }
+
+            // Clear the "E" text from the slot
+            if (slot != null)
+            {
+                slot.SetEquippedText(false);
+            }
+
+            if (item.equipmentType != EquipmentType.None)
+            {
+                switch (item.equipmentType)
+                {
+                    case EquipmentType.Head:
+                        player.headArmor = null;
+                        break;
+                    case EquipmentType.Torso:
+                        player.torsoArmor = null;
+                        break;
+                    default:
+                        Debug.LogWarning("Invalid equipment type.");
+                        return;
+                }
+            }
+            else if (item.type == ItemType.Pistol || item.type == ItemType.Rifle)
+            {
+                switch (item.type)
+                {
+                    case ItemType.Pistol:
+                        player.pistol = null;
+                        break;
+                    case ItemType.Rifle:
+                        player.rifle = null;
+                        break;
+                    default:
+                        Debug.LogWarning("Invalid weapon type.");
+                        return;
+                }
+            }
+        }
+
         private void HandleWeapon(ItemDataSO item, Slot slot, bool isEquipped)
         {
             switch (item.type)
@@ -172,52 +223,6 @@ namespace Managers
             }
         }
 
-        private void Unequip(ItemDataSO item, Slot slot)
-        {
-            if (item == null)
-            {
-                Debug.LogWarning("Invalid item for unequipping.");
-                return;
-            }
-
-            // Clear the "E" text from the slot
-            if (slot != null)
-            {
-                slot.SetEquippedText(false);
-            }
-
-            if (item.equipmentType != EquipmentType.None)
-            {
-                switch (item.equipmentType)
-                {
-                    case EquipmentType.Head:
-                        player.headArmor = null;
-                        break;
-                    case EquipmentType.Torso:
-                        player.torsoArmor = null;
-                        break;
-                    default:
-                        Debug.LogWarning("Invalid equipment type.");
-                        return;
-                }
-            }
-            else if (item.type == ItemType.Pistol || item.type == ItemType.Rifle)
-            {
-                switch (item.type)
-                {
-                    case ItemType.Pistol:
-                        player.pistol = null;
-                        break;
-                    case ItemType.Rifle:
-                        player.rifle = null;
-                        break;
-                    default:
-                        Debug.LogWarning("Invalid weapon type.");
-                        return;
-                }
-            }
-        }
-
         public void LoadEquipment(SaveSystem.SaveData saveData)
         {
             if (saveData == null)
@@ -255,7 +260,6 @@ namespace Managers
                     EquipOrUnequip(pistolSlot.CurrentItem, pistolSlot);
                 }
             }
-
             // Re-equip Rifle
             if (saveData.rifleSlotId != -1)
             {
@@ -268,37 +272,51 @@ namespace Managers
 
             UpdatePlayerStatsUI();
         }
-
-        // Helper function to handle swapping equipped items
-        public void HandleSwappedSlots(Slot originalSlot, Slot newSlot)
+        public void SwapEquippedSlot(ItemDataSO item, Slot newSlot)
         {
-            // Check if the original slot is equipped
-            if (originalSlot.IsEquipped)
+            if (item == null || newSlot == null)
             {
-                if (originalSlot == headSlot)
-                {
-                    headSlot = newSlot;
-                    player.headArmor = newSlot.CurrentItem;
-                }
-                else if (originalSlot == torsoSlot)
-                {
-                    Debug.Log("yoloy");
-                    torsoSlot = newSlot;
-                    player.torsoArmor = newSlot.CurrentItem;
-                }
-                else if (originalSlot == pistolSlot)
-                {
-                    pistolSlot = newSlot;
-                    player.pistol = newSlot.CurrentItem;
-                }
-                else if (originalSlot == rifleSlot)
-                {
-                    rifleSlot = newSlot;
-                    player.rifle = newSlot.CurrentItem;
-                }
+                Debug.LogWarning("Invalid item or slot for swapping equipped slot.");
+                return;
             }
 
-            // Update the UI to reflect changes
+            // Check the type of the item and swap the corresponding slot
+            if (item.equipmentType != EquipmentType.None)
+            {
+                switch (item.equipmentType)
+                {
+                    case EquipmentType.Head:
+                        if (headSlot != null)
+                        {
+                            headSlot.SetEquippedText(false); // Unequip the old head slot
+                        }
+                        headSlot = newSlot; // Update the head slot reference
+                        headSlot.SetEquippedText(true); // Equip the new head slot
+                        player.headArmor = item; // Update the player's head armor
+                        break;
+
+                    case EquipmentType.Torso:
+                        if (torsoSlot != null)
+                        {
+                            torsoSlot.SetEquippedText(false); // Unequip the old torso slot
+                        }
+                        torsoSlot = newSlot; // Update the torso slot reference
+                        torsoSlot.SetEquippedText(true); // Equip the new torso slot
+                        player.torsoArmor = item; // Update the player's torso armor
+                        break;
+
+                    default:
+                        Debug.LogWarning("Invalid equipment type for swapping equipped slot.");
+                        return;
+                }
+            }
+            else
+            {
+                Debug.LogWarning("Invalid item type for swapping equipped slot.");
+                return;
+            }
+
+            // Update the player's stats UI
             UpdatePlayerStatsUI();
         }
     }

@@ -12,21 +12,6 @@ namespace Managers
         [SerializeField] Sprite defaultItemImage;
 
         [SerializeField] InventoryManager inventoryManager;
-
-        private void Awake()
-        {
-            // Implementing the singleton pattern
-            if (instance == null)
-            {
-                instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
-            else if (instance != this)
-            {
-                Destroy(gameObject);
-            }
-        }
-
         private void Start()
         {
             //StartCoroutine(InitializeAfterDelay());

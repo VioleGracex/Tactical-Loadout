@@ -1,61 +1,48 @@
 using Data;
 using Managers;
-using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UI;
 using Inventory;
 using SaveSystem;
+using UnityEngine.SceneManagement;
 
 namespace Game
 {
     public class GameManager : MonoBehaviour
     {
-        #region variables
+        #region Variables
         public static GameManager Instance { get; private set; }
         public int currentSaveSlot = -1;
 
         [Header("Player and Enemy")]
         public Player player;
         public Enemy enemy;
-        [SerializeField] private PlayerDataSO playerData;
-        [SerializeField] private HPBarUpdater playerHPBar;
-        [SerializeField] private EnemyDataSO enemyData;
-        [SerializeField] private HPBarUpdater enemyHPBar;
-
-        [Header("UI Elements")]
-        [SerializeField] private GameObject gameOverText;
-        [SerializeField] private Button shootButton;
-        [SerializeField] private Toggle pistolToggle;
-        [SerializeField] private Toggle rifleToggle;
-
-
-        [Header("Images")]
-        [SerializeField] private Image pistolSprite;
-        [SerializeField] private Image rifleSprite;
+        private PlayerDataSO playerData; // Loaded from Resources
+        private EnemyDataSO enemyData; // Loaded from Resources
 
         [Header("Managers")]
-        [SerializeField] private InventoryManager inventoryManager;
-        [SerializeField] private LootManager lootManager;
-        [SerializeField] private EquipmentManager equipmentManager;
+        private InventoryManager inventoryManager;
+        private LootManager lootManager;
+        private EquipmentManager equipmentManager;
+
+        [Header("UI Elements")]
+        private HPBarUpdater playerHPBar;
+        private HPBarUpdater enemyHPBar;
+        private Button shootButton;
+        private Toggle pistolToggle;
+        private Toggle rifleToggle;
+        private GameObject gameOverPopup;
 
         private bool canShoot = true;
         private float shootCooldown = 0.3f;
         private int enemyLevel = 1;
-#endregion
+        #endregion
 
         #region Unity Methods
         private void Awake()
-        {
-            InitializeSingleton();
-            InitializePlayerAndEnemy();
-            currentSaveSlot = DataCarrier.Instance.CurrentSaveSlotId;
-        }
-
-        #endregion
-
-        private void InitializeSingleton()
         {
             if (Instance == null)
             {
@@ -66,6 +53,56 @@ namespace Game
             {
                 Destroy(gameObject);
             }
+            InitializeSingleton();
+            LoadScriptableObjects();
+            currentSaveSlot = DataCarrier.Instance.CurrentSaveSlotId;
+        }
+
+        private void Start()
+        {
+            InitializeSceneData();
+        }
+        #endregion
+
+        private void InitializeSingleton()
+        {
+            
+        }
+
+        private void LoadScriptableObjects()
+        {
+            // Load PlayerDataSO and EnemyDataSO from Resources
+            playerData = Resources.Load<PlayerDataSO>("SO/NewPlayerData");
+            enemyData = Resources.Load<EnemyDataSO>("SO/NewEnemyData");
+
+            if (playerData == null || enemyData == null)
+            {
+                Debug.LogError("Failed to load ScriptableObjects from Resources.");
+            }
+        }
+
+        private void InitializeSceneData()
+        {
+            LocalSceneData sceneData = FindFirstObjectByType<LocalSceneData>();
+            if (sceneData == null)
+            {
+                Debug.LogError("LocalSceneData not found in the scene.");
+                return;
+            }
+
+            // Assign references from LocalSceneData
+            inventoryManager = FindFirstObjectByType<InventoryManager>();
+            lootManager = FindFirstObjectByType<LootManager>();
+            equipmentManager = FindFirstObjectByType<EquipmentManager>();
+            playerHPBar = sceneData.playerHPBar;
+            enemyHPBar = sceneData.enemyHPBar;
+            shootButton = sceneData.shootButton;
+            pistolToggle = sceneData.pistolToggle;
+            rifleToggle = sceneData.rifleToggle;
+            gameOverPopup = sceneData.gameOverPopup;
+
+            // Initialize player and enemy
+            InitializePlayerAndEnemy();
         }
 
         private void InitializePlayerAndEnemy()
@@ -75,11 +112,16 @@ namespace Game
             InitializePlayer();
             SpawnEnemy();
             shootButton.onClick.AddListener(Shoot);
-            if(currentSaveSlot != -1)
+
+            if (currentSaveSlot != -1)
             {
                 LoadGame();
-                Debug.Log("New Game -1");
-            }       
+                Debug.Log("Loaded Game from Save Slot: " + currentSaveSlot);
+            }
+            else
+            {
+                FindFirstObjectByType<InitialPlayerItems>().AddInitialItems(inventoryManager);
+            }
         }
 
         private void InitializePlayer()
@@ -87,6 +129,7 @@ namespace Game
             player.Initialize(playerData);
             playerHPBar.UpdateHealthBar(player.hp);
         }
+
         private void SpawnEnemy()
         {
             enemy.Initialize(enemyData);
@@ -101,7 +144,7 @@ namespace Game
 
             if (saveData != null)
             {
-                Debug.Log("Found Save DAta");
+                Debug.Log("Found Save Data");
                 // Load Player Data
                 player.hp = saveData.playerHP;
                 player.level = saveData.playerLevel;
@@ -109,10 +152,9 @@ namespace Game
                 // Load Enemy Data
                 enemy.hp = saveData.enemyHP;
                 enemy.level = saveData.enemyLevel;
-                Debug.Log("items "+ saveData.inventorySlots);
+
                 // Load Inventory Data
                 inventoryManager.LoadInventory(saveData.inventorySlots);
-                
 
                 // Re-equip items using EquipmentManager
                 equipmentManager.LoadEquipment(saveData);
@@ -128,11 +170,10 @@ namespace Game
         public void SaveGame(int slotId)
         {
             currentSaveSlot = slotId;
-            SaveLoadManager.SaveGame( currentSaveSlot,this, inventoryManager, equipmentManager);
+            SaveLoadManager.SaveGame(currentSaveSlot, this, inventoryManager, equipmentManager);
         }
 
         #region Player Actions
-
         public void Heal(int value)
         {
             inventoryManager.ConsumeItemByName("Medkit", 1);
@@ -142,7 +183,6 @@ namespace Game
 
         public void Shoot()
         {
-            Debug.Log("shooting");
             if (!canShoot)
             {
                 Debug.Log("Shoot is on cooldown.");
@@ -178,7 +218,7 @@ namespace Game
             enemyHPBar.UpdateHealthBar(enemy.hp);
         }
 
-        private System.Collections.IEnumerator ShootCooldown()
+        private IEnumerator ShootCooldown()
         {
             canShoot = false;
             shootButton.interactable = false;
@@ -189,11 +229,10 @@ namespace Game
         #endregion
 
         #region Game State Management
-
         public void ShowGameOver()
         {
             Time.timeScale = 0.0f;
-            gameOverText.gameObject.SetActive(true);
+            gameOverPopup.SetActive(true);
         }
 
         public void GenerateLoot(int enemyLevel)

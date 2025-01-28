@@ -55,7 +55,7 @@ namespace Data
             {
                 hp = 0;
                 Debug.Log("Player died.");
-                GameManager.Instance.ShowGameOver();
+                Object.FindFirstObjectByType<GameManager>().ShowGameOver();
                 // Call game over pop up
             }
         }
@@ -90,6 +90,6 @@ namespace Data
 
         private void DropLoot() =>
             // Call generate random loot pop up from game manager
-            GameManager.Instance.GenerateLoot(level); // Assuming GameManager has a singleton instance
+           Object.FindFirstObjectByType<GameManager>().GenerateLoot(level); // Assuming GameManager has a singleton instance
     }
 }
