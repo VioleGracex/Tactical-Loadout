@@ -24,7 +24,7 @@ namespace Managers
 
         void Start()
         {
-            player = GameManager.Instance.player;
+            player = FindFirstObjectByType<GameManager>().player;
             UpdatePlayerStatsUI();
         }
 
@@ -247,6 +247,7 @@ namespace Managers
                 Slot torsoSlot = inventoryManager.slots.Find(s => s.id == saveData.torsoSlotId);
                 if (torsoSlot != null && torsoSlot.CurrentItem != null)
                 {
+                    Debug.Log("Re-equip torso armor: at " + saveData.torsoSlotId);
                     EquipOrUnequip(torsoSlot.CurrentItem, torsoSlot);
                 }
             }

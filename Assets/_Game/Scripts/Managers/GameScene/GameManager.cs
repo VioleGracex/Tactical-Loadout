@@ -14,27 +14,26 @@ namespace Game
     public class GameManager : MonoBehaviour
     {
         #region Variables
-        public static GameManager Instance { get; private set; }
         public int currentSaveSlot = -1;
 
         [Header("Player and Enemy")]
         public Player player;
         public Enemy enemy;
-        private PlayerDataSO playerData; // Loaded from Resources
-        private EnemyDataSO enemyData; // Loaded from Resources
+        [SerializeField] private PlayerDataSO playerData; // Loaded from Resources
+        [SerializeField] private EnemyDataSO enemyData; // Loaded from Resources
 
         [Header("Managers")]
-        private InventoryManager inventoryManager;
-        private LootManager lootManager;
-        private EquipmentManager equipmentManager;
+        [SerializeField] private InventoryManager inventoryManager;
+        [SerializeField] private LootManager lootManager;
+        [SerializeField] private EquipmentManager equipmentManager;
 
         [Header("UI Elements")]
-        private HPBarUpdater playerHPBar;
-        private HPBarUpdater enemyHPBar;
-        private Button shootButton;
-        private Toggle pistolToggle;
-        private Toggle rifleToggle;
-        private GameObject gameOverPopup;
+        [SerializeField] private HPBarUpdater playerHPBar;
+        [SerializeField] private HPBarUpdater enemyHPBar;
+        [SerializeField] private Button shootButton;
+        [SerializeField] private Toggle pistolToggle;
+        [SerializeField] private Toggle rifleToggle;
+        [SerializeField] private GameObject gameOverPopup;
 
         private bool canShoot = true;
         private float shootCooldown = 0.3f;
@@ -44,16 +43,6 @@ namespace Game
         #region Unity Methods
         private void Awake()
         {
-            if (Instance == null)
-            {
-                Instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
-            InitializeSingleton();
             LoadScriptableObjects();
             currentSaveSlot = DataCarrier.Instance.CurrentSaveSlotId;
         }
@@ -63,11 +52,6 @@ namespace Game
             InitializeSceneData();
         }
         #endregion
-
-        private void InitializeSingleton()
-        {
-            
-        }
 
         private void LoadScriptableObjects()
         {
@@ -90,16 +74,6 @@ namespace Game
                 return;
             }
 
-            // Assign references from LocalSceneData
-            inventoryManager = FindFirstObjectByType<InventoryManager>();
-            lootManager = FindFirstObjectByType<LootManager>();
-            equipmentManager = FindFirstObjectByType<EquipmentManager>();
-            playerHPBar = sceneData.playerHPBar;
-            enemyHPBar = sceneData.enemyHPBar;
-            shootButton = sceneData.shootButton;
-            pistolToggle = sceneData.pistolToggle;
-            rifleToggle = sceneData.rifleToggle;
-            gameOverPopup = sceneData.gameOverPopup;
 
             // Initialize player and enemy
             InitializePlayerAndEnemy();

@@ -47,7 +47,6 @@ namespace Inventory
 
         public Slot(ItemDataSO item = null, int amount = 0, bool isEquipped = false)
         {
-            Debug.Log("Name in slot set " + item.name);
             CurrentItem = item;
             CurrentAmount = amount;
             this.isEquipped = isEquipped; // Initialize equipped state
@@ -58,7 +57,6 @@ namespace Inventory
         {
             if (item != null)
             {
-                Debug.Log("Name in slot " + item.name);
                 CurrentItem = item;
                 currentItem.itemName = item.itemName;
                 CurrentAmount = amount;
@@ -157,13 +155,13 @@ namespace Inventory
                     // If the original slot was equipped and the item is equippable, update the equipped slot
                     if (wasOriginalSlotEquipped && draggedItemData != null && IsItemEquippable(draggedItemData))
                     {
-                        EquipmentManager.Instance.SwapEquippedSlot(draggedItemData, this);
+                        FindFirstObjectByType<EquipmentManager>().SwapEquippedSlot(draggedItemData, this);
                     }
 
                     // If this slot was equipped and the new item is equippable, update the equipped slot
                     if (this.IsEquipped && CurrentItem != null && IsItemEquippable(CurrentItem))
                     {
-                        EquipmentManager.Instance.SwapEquippedSlot(CurrentItem, this);
+                        FindFirstObjectByType<EquipmentManager>().SwapEquippedSlot(CurrentItem, this);
                     }
 
                     // Update the UI for both slots

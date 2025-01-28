@@ -57,44 +57,55 @@ namespace Managers
         #endregion
 
         #region Inventory Initialization and Loading
-        public void LoadInventory(List<SlotSaveData> slotDataList)
+       public void LoadInventory(List<SlotSaveData> slotDataList)
+{
+    if (slotDataList == null)
+    {
+        Debug.LogWarning("No inventory data provided for loading.");
+        return;
+    }
+
+    // Clear existing inventory and dictionaries
+    foreach (var slot in slots)
+    {
+        slot.SetItem(null, 0); // Clear all slots
+    }
+    itemDictionary.Clear();
+    itemSlotDictionary.Clear();
+
+    Debug.Log(slotDataList.Count);
+
+    // Load items into slots and update dictionaries
+    foreach (var slotData in slotDataList)
+    {
+        // Ensure the slotId is within the valid range
+        if (slotData.slotId >= 0 && slotData.slotId < slots.Count)
         {
-            if (slotDataList == null)
-            {
-                Debug.LogWarning("No inventory data provided for loading.");
+            ItemDataSO itemData = slotData.item.ToItemDataSO();
+            slots[slotData.slotId].SetItem(itemData, slotData.amount);
 
-                return;
+            // Update itemDictionary
+            if (!itemDictionary.ContainsKey(itemData.Id))
+            {
+                itemDictionary[itemData.Id] = itemData;
             }
 
-            // Clear existing inventory
-            foreach (var slot in slots)
+            // Update itemSlotDictionary
+            if (!itemSlotDictionary.ContainsKey(itemData.itemName))
             {
-                slot.SetItem(null, 0); // Clear all slots
+                itemSlotDictionary[itemData.itemName] = new List<Slot>();
             }
-            Debug.Log(slotDataList.Count);
-            // Load items into slots
-            foreach (var slotData in slotDataList)
-            {
-                //Debug.Log(slotData.item.itemName);
-                // Ensure the slotId is within the valid range
-                if (slotData.slotId >= 0 && slotData.slotId < slots.Count)
-                {
-                   
-                    // Set the item and amount in the corresponding slot
-                    slots[slotData.slotId].SetItem(slotData.item.ToItemDataSO(), slotData.amount);
-
-                }
-                else
-                {
-                    Debug.LogWarning($"Invalid slotId {slotData.slotId}. Skipping this item.");
-                }
-            }
-            Debug.Log("finished loading items to slots updating weight.");
-            UpdateAmmoAndWeight(); // Update UI after loading inventory
-                                   // Re-equip items using EquipmentManager
-                                   //FindFirstObjectByType<EquipmentManager>().LoadEquipment(saveData);
-
+            itemSlotDictionary[itemData.itemName].Add(slots[slotData.slotId]);
         }
+        else
+        {
+            Debug.LogWarning($"Invalid slotId {slotData.slotId}. Skipping this item.");
+        }
+    }
+
+    Debug.Log("Finished loading items to slots. Updating weight.");
+    UpdateAmmoAndWeight(); // Update UI after loading inventory
+}
         #endregion
 
         #region Inventory Management

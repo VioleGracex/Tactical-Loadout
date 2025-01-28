@@ -9,12 +9,6 @@ public class LocalSceneData : MonoBehaviour
 {
 
 
-    [Header("UI Elements")]
-    public HPBarUpdater playerHPBar;
-    public HPBarUpdater enemyHPBar;
-    public Button shootButton;
-    public Toggle pistolToggle;
-    public Toggle rifleToggle;
-    public GameObject gameOverPopup;
+   
 
 }
